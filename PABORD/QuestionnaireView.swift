@@ -40,6 +40,10 @@ struct QuestionnaireView: View {
     @State private var slider16Value: Int? = nil
 
     @State private var randomizedQuestionIndices: [Int] = []
+    
+    // ⚠️ Alert per errore invio dati
+    @State private var showSendErrorAlert = false
+    @State private var sendErrorMessage = ""
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -106,6 +110,13 @@ struct QuestionnaireView: View {
                     }
                 }
             }
+        }
+        .alert("Errore invio dati", isPresented: $showSendErrorAlert) {
+            Button("OK") {
+                // L'utente può riprovare cliccando nuovamente "Avanti" se vuole
+            }
+        } message: {
+            Text(sendErrorMessage)
         }
     }
 
@@ -525,7 +536,26 @@ struct QuestionnaireView: View {
             DispatchQueue.main.async {
                 self.logMessage("Invio dati completato: \(success ? "successo" : "fallito") - \(message)")
                 
-                // ✅ CANCELLA LE NOTIFICHE REMINDER ED EXPIRED (sia in caso di successo che fallimento)
+                if !success {
+                    // ⚠️ ERRORE: mostra alert e resetta come se avesse risposto
+                    self.sendErrorMessage = message
+                    self.showSendErrorAlert = true
+                    self.logMessage("⚠️ Invio fallito, utente informato con alert")
+                    
+                    // Resetta lo stato del questionario (torna a "Attendere notifica")
+                    self.appStateManager.hasCompletedQuestionnaire = false
+                    self.appStateManager.isQuestionnaireAvailable = false
+                    self.appStateManager.activeNotificationType = nil
+                    self.appStateManager.currentQuestionIndex = 0
+                    self.randomizedQuestionIndices = []
+                    NotificationManager.shared.clearBadge()
+                    
+                    return
+                }
+                
+                // ✅ SUCCESSO: procedi con cancellazione notifiche e completamento
+                
+                // ✅ CANCELLA LE NOTIFICHE REMINDER ED EXPIRED
                 if let notificationDate = notificationScheduledDate {
                     NetworkManager.shared.cancelPendingNotifications(
                         codice_soggetto: userCode,
@@ -539,13 +569,6 @@ struct QuestionnaireView: View {
                         }
                     }
                 }
-                
-                // ✅ Mostra schermata complimenti
-                self.appStateManager.hasCompletedQuestionnaire = true
-                self.appStateManager.isQuestionnaireAvailable = false
-                self.appStateManager.activeNotificationType = nil
-                self.appStateManager.currentQuestionIndex = 0
-                self.randomizedQuestionIndices = []
                 
                 // ✅ Resetta badge
                 NotificationManager.shared.clearBadge()
