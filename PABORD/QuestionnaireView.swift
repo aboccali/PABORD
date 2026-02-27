@@ -44,6 +44,9 @@ struct QuestionnaireView: View {
     // ⚠️ Alert per errore invio dati
     @State private var showSendErrorAlert = false
     @State private var sendErrorMessage = ""
+    
+    // 🔄 Flag per prevenire invii multipli
+    @State private var isSubmitting = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -113,10 +116,32 @@ struct QuestionnaireView: View {
         }
         .alert("Errore invio dati", isPresented: $showSendErrorAlert) {
             Button("OK") {
-                // L'utente può riprovare cliccando nuovamente "Avanti" se vuole
+                // Alert di errore dopo timeout/fallimento
             }
         } message: {
             Text(sendErrorMessage)
+        }
+        .overlay {
+            // 🔄 Loading overlay durante invio dati
+            if isSubmitting {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        
+                        Text("Invio dati in corso...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                    .padding(30)
+                    .background(Color.gray.opacity(0.9))
+                    .cornerRadius(15)
+                }
+            }
         }
     }
 
@@ -466,21 +491,33 @@ struct QuestionnaireView: View {
     // MARK: - Invio dati e completamento questionario
     private func sendSurveyAndComplete(questionnaireType: Int) {
         
-        // 🔒 Marca la sessione come completata (impedisce risposta duplicata)
-        if let sessionId = appStateManager.currentNotificationSessionId {
-            appStateManager.markSessionAsExpired(sessionId: sessionId)
-            logMessage("🔒 Sessione \(sessionId) marcata come completata")
+        // 🔒 Previeni invii multipli
+        guard !isSubmitting else {
+            logMessage("⚠️ Invio già in corso, ignoro click")
+            return
         }
+        
+        isSubmitting = true
+        logMessage("🔄 Avvio invio dati (isSubmitting = true)")
         
         // 🎮 MODALITÀ DEMO: non inviare nulla al server
         if appStateManager.isTestMode {
             logMessage("🎮 Modalità demo: invio dati al server BLOCCATO")
+            
+            // 🔒 Marca la sessione come completata anche in demo
+            if let sessionId = appStateManager.currentNotificationSessionId {
+                appStateManager.markSessionAsExpired(sessionId: sessionId)
+                logMessage("🔒 Sessione \(sessionId) marcata come completata (demo)")
+            }
+            
             appStateManager.hasCompletedQuestionnaire = true
             appStateManager.isQuestionnaireAvailable = false
             appStateManager.activeNotificationType = nil
             appStateManager.currentQuestionIndex = 0
             randomizedQuestionIndices = []
             NotificationManager.shared.clearBadge()
+            
+            isSubmitting = false  // ✅ Reset flag
             return
         }
         
@@ -550,6 +587,7 @@ struct QuestionnaireView: View {
                     self.randomizedQuestionIndices = []
                     NotificationManager.shared.clearBadge()
                     
+                    self.isSubmitting = false  // ✅ Reset flag
                     return
                 }
                 
@@ -570,8 +608,23 @@ struct QuestionnaireView: View {
                     }
                 }
                 
+                // 🔒 Marca la sessione come completata (impedisce risposta duplicata)
+                if let sessionId = self.appStateManager.currentNotificationSessionId {
+                    self.appStateManager.markSessionAsExpired(sessionId: sessionId)
+                    self.logMessage("🔒 Sessione \(sessionId) marcata come completata")
+                }
+                
+                // ✅ Mostra schermata complimenti
+                self.appStateManager.hasCompletedQuestionnaire = true
+                self.appStateManager.isQuestionnaireAvailable = false
+                self.appStateManager.activeNotificationType = nil
+                self.appStateManager.currentQuestionIndex = 0
+                self.randomizedQuestionIndices = []
+                
                 // ✅ Resetta badge
                 NotificationManager.shared.clearBadge()
+                
+                self.isSubmitting = false  // ✅ Reset flag
             }
         }
     }
