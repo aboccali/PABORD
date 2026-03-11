@@ -321,7 +321,22 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         AppStateManager.shared.notificationScheduledDateOriginal = scheduledDate  // 🔑 Sempre data ORIGINAL per il server
         AppStateManager.shared.currentNotificationSessionId = sessionId  // 🔑 Salva session ID
         AppStateManager.shared.activeNotificationRole = notificationRole  // 🔑 Salva ruolo notifica
-        
+
+        // ✅ Salva timePoint e info giorno dal payload della notifica toccata
+        // Fondamentale per determinare le domande corrette (es. Q4 solo T6, Q16 solo primo/ultimo giorno)
+        if let timePoint = userInfo["timePoint"] as? String {
+            AppStateManager.shared.currentTimePoint = timePoint
+            print("📌 TimePoint (tap): \(timePoint)")
+        }
+        if let isFirstDayStr = userInfo["isFirstDay"] as? String {
+            AppStateManager.shared.isFirstDay = (isFirstDayStr == "true")
+            print("📅 Primo giorno (tap): \(AppStateManager.shared.isFirstDay)")
+        }
+        if let isLastDayStr = userInfo["isLastDay"] as? String {
+            AppStateManager.shared.isLastDay = (isLastDayStr == "true")
+            print("📅 Ultimo giorno (tap): \(AppStateManager.shared.isLastDay)")
+        }
+
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
         formatter.timeZone = TimeZone.current
