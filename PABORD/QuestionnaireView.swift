@@ -631,12 +631,98 @@ struct QuestionnaireView: View {
 
     private func completionScreen() -> AnyView {
         AnyView(
-            VStack {
-                Text("Complimenti, hai completato il questionario!")
-                    .font(.largeTitle)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.black)
-            }
+            FireworksCompletionView()
         )
     }
+}
+
+// MARK: - Fuochi d'artificio
+
+struct FireworksCompletionView: View {
+    @State private var particles: [FireworkParticle] = []
+    @State private var launchTimer: Timer? = nil
+
+    var body: some View {
+        ZStack {
+            ForEach(particles) { p in
+                Circle()
+                    .fill(p.color)
+                    .frame(width: p.size, height: p.size)
+                    .position(x: p.x, y: p.y)
+                    .opacity(p.opacity)
+            }
+
+            VStack(spacing: 16) {
+                Text("🎉")
+                    .font(.system(size: 64))
+                Text("Complimenti, hai completato il questionario!")
+                    .font(.largeTitle)
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.black)
+                    .padding(.horizontal)
+            }
+        }
+        .onAppear {
+            launchBurst()
+            launchTimer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { _ in
+                launchBurst()
+            }
+        }
+        .onDisappear {
+            launchTimer?.invalidate()
+        }
+    }
+
+    private func launchBurst() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        let cx = CGFloat.random(in: screenW * 0.15 ... screenW * 0.85)
+        let cy = CGFloat.random(in: screenH * 0.1 ... screenH * 0.55)
+        let colors: [Color] = [.orange, .yellow, .red, .pink, .purple, .blue, .green, .mint]
+        let count = Int.random(in: 28...40)
+
+        for _ in 0..<count {
+            let angle = Double.random(in: 0 ..< 2 * .pi)
+            let distance = CGFloat.random(in: 60...160)
+            let duration = Double.random(in: 0.7 ... 1.3)
+            let size = CGFloat.random(in: 4...10)
+            let p = FireworkParticle(
+                x: cx, y: cy,
+                targetX: cx + cos(angle) * distance,
+                targetY: cy + sin(angle) * distance,
+                color: colors.randomElement()!,
+                size: size,
+                opacity: 1.0
+            )
+            particles.append(p)
+            let id = p.id
+
+            withAnimation(.easeOut(duration: duration)) {
+                if let idx = particles.firstIndex(where: { $0.id == id }) {
+                    particles[idx].x = p.targetX
+                    particles[idx].y = p.targetY
+                }
+            }
+            withAnimation(.easeIn(duration: duration * 0.5).delay(duration * 0.5)) {
+                if let idx = particles.firstIndex(where: { $0.id == id }) {
+                    particles[idx].opacity = 0
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.1) {
+                particles.removeAll { $0.id == id }
+            }
+        }
+    }
+}
+
+struct FireworkParticle: Identifiable {
+    let id = UUID()
+    var x: CGFloat
+    var y: CGFloat
+    var targetX: CGFloat
+    var targetY: CGFloat
+    var color: Color
+    var size: CGFloat
+    var opacity: Double
 }

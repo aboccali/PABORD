@@ -5,7 +5,6 @@
 //  Created by Neuroinformatica on 06/05/25.
 //
 
-
 import SwiftUI
 
 struct Question16View: View {
@@ -20,15 +19,20 @@ struct Question16View: View {
     @State private var showAlert = false
 
     var body: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 20) {
             Spacer()
 
-            Text("Siamo consapevoli che rispondere alle domande dell'APP talvolta può essere impegnativo nella vita di tutti i giorni. Dunque, vorremmo porle una domanda confidenziale che non verrà inoltrata al servizio dove lei è in cura: quanto impegno mette nel rispondere alle domande?")
-                .font(.title2)
-                .multilineTextAlignment(.center)
-                .padding()
+            // ── Solo il testo della domanda è scorrevole ──
+            ScrollView {
+                Text("Siamo consapevoli che rispondere alle domande dell'APP talvolta può essere impegnativo nella vita di tutti i giorni. Dunque, vorremmo porle una domanda confidenziale che non verrà inoltrata al servizio dove lei è in cura: quanto impegno mette nel rispondere alle domande?")
+                    .font(.title2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-            VStack(spacing: 20) {
+            // ── Slider fisso, fuori dallo ScrollView ──
+            VStack(spacing: 10) {
                 Slider(value: $sliderValue, in: 0...100, step: 1, onEditingChanged: { editing in
                     if !editing {
                         if Int(sliderValue) != Int(initialSliderValue) {
@@ -36,7 +40,7 @@ struct Question16View: View {
                         }
                     }
                 })
-                .padding()
+                .padding(.horizontal)
                 .accentColor(.orange)
 
                 HStack {
@@ -52,6 +56,7 @@ struct Question16View: View {
 
             Spacer()
 
+            // ── Pulsanti ──
             HStack {
                 Button("Indietro") {
                     onIndietro()
@@ -90,3 +95,5 @@ struct Question16View: View {
         }
     }
 }
+
+
