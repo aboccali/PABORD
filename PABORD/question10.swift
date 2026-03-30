@@ -11,7 +11,7 @@ import SwiftUI
 struct Question10View: View {
     @Binding var question10YesNoAnswer: Int             // 0 per No, 1 per Sì
     @Binding var question10FirstChoices: [Int]          // Scelte multiple
-    @Binding var question10SecondChoice: Int            // Scelta singola
+    @Binding var question10SecondChoice: Int?          // Scelta singola
 
     var onAvanti: () -> Void
     var onIndietro: () -> Void
@@ -52,7 +52,7 @@ struct Question10View: View {
                     hasEvent = false
                     question10YesNoAnswer = 0
                     question10FirstChoices = []
-                    question10SecondChoice = 0
+                    question10SecondChoice = nil
                     showAlert = false
                 }
                 .padding()
@@ -191,7 +191,7 @@ struct Question10View: View {
                     if !hasSelected {
                         question10YesNoAnswer = 0
                         question10FirstChoices = []
-                        question10SecondChoice = 0
+                        question10SecondChoice = nil
                         onAvanti()
                     }
                 }

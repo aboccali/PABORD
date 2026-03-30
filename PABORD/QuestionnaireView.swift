@@ -553,21 +553,37 @@ struct QuestionnaireView: View {
             IMP_LACK_PERS: question4Slider4,
             IMP_SENS_SEEK: question4Slider5,
             STRESS_EVT_OCC: question5YesNot,
-            STRESS_EVT_TYPE: question5OpenText,
+            STRESS_EVT_TYPE: {
+                guard question5YesNot == 1, let choice = question5Selection else { return "" }
+                if choice == 7 { return "7, \(question5OpenText)" }
+                return String(choice)
+            }(),
             STRESS_EVT_INT: question6Selection,
             POS_EVT_OCC: question7YesNot,
-            POS_EVT_TYPE: question7OpenText,
+            POS_EVT_TYPE: {
+                guard question7YesNot == 1, let choice = question7Selection else { return "" }
+                if choice == 7 { return "7, \(question7OpenText)" }
+                return String(choice)
+            }(),
             POS_EVT_INT: question8Selection,
             DYS_BEH: question9YesNot,
-            DYS_BEH_TYPE: question9OpenText,
+            DYS_BEH_TYPE: {
+                guard question9YesNot == 1, !question9Selection.isEmpty else { return "" }
+                let sorted = question9Selection.sorted()
+                if sorted.contains(7) {
+                    let codes = sorted.map(String.init).joined(separator: ",")
+                    return question9OpenText.isEmpty ? codes : "\(codes), \(question9OpenText)"
+                }
+                return sorted.map(String.init).joined(separator: ",")
+            }(),
             PHY_ACT: question10YesNoAnswer,
             PHY_ACT_TYPE: question10FirstChoices.map(String.init).joined(separator: ","),
             PHY_ACT_INT: question10SecondChoice,
             SLEEP_HR: question11Selection,
             SLEEP_SAT: question12Selection,
             SLEEP_ONSET: question13Selection,
-            SLEEP_MAINT: question14Selection,
-            DAILY_NAP: question15Selection,
+            SLEEP_MAINT: randomizedQuestionIndices.contains(13) ? (question14Selection ?? 0) : question14Selection,
+            DAILY_NAP: randomizedQuestionIndices.contains(14) ? (question15Selection ?? 0) : question15Selection,
             PERC_EFF: slider16Value
         ) { success, message in
             DispatchQueue.main.async {
