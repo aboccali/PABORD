@@ -35,14 +35,16 @@ struct Question11View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     if let value = Int(inputText), value >= 0 && value <= 99 {
                         question11Choice = value
                         showAlert = false
@@ -50,9 +52,11 @@ struct Question11View: View {
                     } else {
                         showAlert = true
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

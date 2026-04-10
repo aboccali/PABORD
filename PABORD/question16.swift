@@ -22,16 +22,14 @@ struct Question16View: View {
         VStack(spacing: 20) {
             Spacer()
 
-            // ── Solo il testo della domanda è scorrevole ──
             ScrollView {
-                Text("Siamo consapevoli che rispondere alle domande dell'APP talvolta può essere impegnativo nella vita di tutti i giorni. Dunque, vorremmo porle una domanda confidenziale che non verrà inoltrata al servizio dove lei è in cura: quanto impegno mette nel rispondere alle domande?")
+                Text("Siamo consapevoli che rispondere alle domande dell'APP talvolta può essere impegnativo nella vita di tutti i giorni. Dunque, vorremmo porle una domanda confidenziale: quanto impegno mette nel rispondere alle domande?")
                     .font(.title2)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            // ── Slider fisso, fuori dallo ScrollView ──
             VStack(spacing: 10) {
                 Slider(value: $sliderValue, in: 0...100, step: 1, onEditingChanged: { editing in
                     if !editing {
@@ -56,25 +54,28 @@ struct Question16View: View {
 
             Spacer()
 
-            // ── Pulsanti ──
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     if !hasMovedSlider {
                         showAlert = true
                     } else {
                         slider16Value = Int(sliderValue)
                         onAvanti()
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(hasMovedSlider ? Color.orange : Color.gray.opacity(0.3))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -95,5 +96,3 @@ struct Question16View: View {
         }
     }
 }
-
-

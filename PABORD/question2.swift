@@ -12,7 +12,6 @@ struct Question2View: View {
     var onAvanti: () -> Void
     var onIndietro: () -> Void
 
-    // Elenco delle opzioni (puoi aggiungerne facilmente altre)
     let options = [
         (1, "Sono a letto malata"),
         (2, "Sto mangiando/bevendo/facendo colazione/facendo uno spuntino"),
@@ -65,21 +64,23 @@ struct Question2View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .contentShape(Rectangle())
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
 
                 if question2Choice != 0 {
-                    Button("Avanti") {
+                    Button {
                         onAvanti()
+                    } label: {
+                        Text("Avanti")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .contentShape(Rectangle())
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)

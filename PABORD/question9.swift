@@ -19,7 +19,6 @@ struct Question9View: View {
     @State private var selectedOptions: Set<Int> = []
     @State private var otherText: String = ""
     @State private var showAlert = false
-
     @State private var showInfoPopup = false
 
     let stressOptions: [(Int, String)] = [
@@ -37,7 +36,6 @@ struct Question9View: View {
 
     var body: some View {
         ZStack {
-            // Main content
             VStack(spacing: 20) {
                 Spacer()
 
@@ -46,7 +44,7 @@ struct Question9View: View {
                     .multilineTextAlignment(.center)
 
                 HStack {
-                    Button("No") {
+                    Button {
                         hasStressEvent = false
                         question9YesNoAnswer = 0
                         question9Choices = []
@@ -54,20 +52,24 @@ struct Question9View: View {
                         selectedOptions = []
                         otherText = ""
                         showAlert = false
+                    } label: {
+                        Text("No")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(hasStressEvent == false ? Color.orange : Color.gray.opacity(0.8))
                     .foregroundColor(.white)
                     .cornerRadius(10)
 
-                    Button("Sì") {
+                    Button {
                         hasStressEvent = true
                         question9YesNoAnswer = 1
                         showAlert = false
+                    } label: {
+                        Text("Sì")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(hasStressEvent == true ? Color.orange : Color.gray.opacity(0.8))
                     .foregroundColor(.white)
                     .cornerRadius(10)
@@ -104,8 +106,8 @@ struct Question9View: View {
                                             }
                                         }
                                         .padding()
+                                        .frame(maxWidth: .infinity)
                                         .background(selectedOptions.contains(option.0) ? Color.orange : Color.gray.opacity(0.8))
-                            
                                         .cornerRadius(10)
                                     }
                                 }
@@ -125,14 +127,16 @@ struct Question9View: View {
                 Spacer()
 
                 HStack {
-                    Button("Indietro") {
+                    Button {
                         onIndietro()
+                    } label: {
+                        Text("Indietro")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
                     .foregroundColor(.orange)
 
-                    Button("Avanti") {
+                    Button {
                         guard let hasEvent = hasStressEvent else {
                             showAlert = true
                             return
@@ -148,20 +152,15 @@ struct Question9View: View {
                                 showAlert = true
                                 return
                             }
-
                             question9Choices = Array(selectedOptions).sorted()
-
-                            if selectedOptions.contains(7) {
-                                openResponseText9 = otherText
-                            } else {
-                                openResponseText9 = ""
-                            }
-
+                            openResponseText9 = selectedOptions.contains(7) ? otherText : ""
                             onAvanti()
                         }
+                    } label: {
+                        Text("Avanti")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)
@@ -176,7 +175,6 @@ struct Question9View: View {
             }
             .padding()
 
-            // Info popup overlay
             if showInfoPopup {
                 Color.black.opacity(0.4).ignoresSafeArea()
 
@@ -207,7 +205,6 @@ struct Question9View: View {
             let shownCount = UserDefaults.standard.integer(forKey: popupCountKey)
             if shownCount < maxPopupCount {
                 showInfoPopup = true
-                //UserDefaults.standard.set(shownCount + 1, forKey: popupCountKey)
             }
         }
     }

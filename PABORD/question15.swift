@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct Question15View: View {
-    @Binding var question15Choice: Int     // Deve iniziare a -1 nel contenitore
+    @Binding var question15Choice: Int
     var onAvanti: () -> Void
     var onIndietro: () -> Void
 
@@ -60,22 +60,26 @@ struct Question15View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     if question15Choice == -1 {
                         showAlert = true
                         return
                     }
                     onAvanti()
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

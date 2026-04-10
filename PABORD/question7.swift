@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct Question7View: View {
-    @Binding var question7YesNoAnswer: Int  // 0 per No, 1 per Sì
-    @Binding var question7Choice: Int       // da 1 a 7
-    @Binding var openResponseText7: String   // testo libero per "Altro"
+    @Binding var question7YesNoAnswer: Int
+    @Binding var question7Choice: Int
+    @Binding var openResponseText7: String
 
     var onAvanti: () -> Void
     var onIndietro: () -> Void
@@ -39,7 +39,7 @@ struct Question7View: View {
                 .multilineTextAlignment(.center)
 
             HStack {
-                Button("No") {
+                Button {
                     hasStressEvent = false
                     question7YesNoAnswer = 0
                     question7Choice = 0
@@ -47,20 +47,24 @@ struct Question7View: View {
                     selectedOption = nil
                     otherText = ""
                     showAlert = false
+                } label: {
+                    Text("No")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasStressEvent == false ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
 
-                Button("Sì") {
+                Button {
                     hasStressEvent = true
                     question7YesNoAnswer = 1
                     showAlert = false
+                } label: {
+                    Text("Sì")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasStressEvent == true ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -93,6 +97,7 @@ struct Question7View: View {
                                         }
                                     }
                                     .padding()
+                                    .frame(maxWidth: .infinity)
                                     .background(selectedOption == option.0 ? Color.orange : Color.gray.opacity(0.8))
                                     .cornerRadius(10)
                                 }
@@ -113,14 +118,16 @@ struct Question7View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     guard let hasEvent = hasStressEvent else {
                         showAlert = true
                         return
@@ -136,20 +143,15 @@ struct Question7View: View {
                             showAlert = true
                             return
                         }
-
                         question7Choice = selected
-
-                        if selected == 7 {
-                            openResponseText7 = otherText
-                        } else {
-                            openResponseText7 = ""
-                        }
-
+                        openResponseText7 = selected == 7 ? otherText : ""
                         onAvanti()
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

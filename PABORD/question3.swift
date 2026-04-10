@@ -5,7 +5,6 @@
 //  Created by Neuroinformatica on 10/04/25.
 //
 
-
 import SwiftUI
 
 struct Question3View: View {
@@ -27,6 +26,7 @@ struct Question3View: View {
                 }) {
                     Text("Da sola")
                         .padding()
+                        .frame(maxWidth: .infinity)
                         .background(question3Choice == 1 ? Color.orange : Color.gray.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(10)
@@ -37,6 +37,7 @@ struct Question3View: View {
                 }) {
                     Text("Con una o più persone")
                         .padding()
+                        .frame(maxWidth: .infinity)
                         .background(question3Choice == 2 ? Color.orange : Color.gray.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(10)
@@ -46,24 +47,24 @@ struct Question3View: View {
 
             Spacer()
 
-            // Pulsanti avanti e indietro
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .contentShape(Rectangle())
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
-                
-                // Mostra solo se è stata fatta una selezione
+
                 if question3Choice != 0 {
-                    Button("Avanti") {
+                    Button {
                         onAvanti()
+                    } label: {
+                        Text("Avanti")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .contentShape(Rectangle())
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)

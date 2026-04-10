@@ -5,13 +5,12 @@
 //  Created by Neuroinformatica on 29/04/25.
 //
 
-
 import SwiftUI
 
 struct Question5View: View {
-    @Binding var question5YesNoAnswer: Int  // 0 per No, 1 per Sì
-    @Binding var question5Choice: Int       // da 1 a 7
-    @Binding var openResponseText5: String   // testo libero per "Altro"
+    @Binding var question5YesNoAnswer: Int
+    @Binding var question5Choice: Int
+    @Binding var openResponseText5: String
 
     var onAvanti: () -> Void
     var onIndietro: () -> Void
@@ -40,7 +39,7 @@ struct Question5View: View {
                 .multilineTextAlignment(.center)
 
             HStack {
-                Button("No") {
+                Button {
                     hasStressEvent = false
                     question5YesNoAnswer = 0
                     question5Choice = 0
@@ -48,20 +47,24 @@ struct Question5View: View {
                     selectedOption = nil
                     otherText = ""
                     showAlert = false
+                } label: {
+                    Text("No")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasStressEvent == false ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
 
-                Button("Sì") {
+                Button {
                     hasStressEvent = true
                     question5YesNoAnswer = 1
                     showAlert = false
+                } label: {
+                    Text("Sì")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasStressEvent == true ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -94,6 +97,7 @@ struct Question5View: View {
                                         }
                                     }
                                     .padding()
+                                    .frame(maxWidth: .infinity)
                                     .background(selectedOption == option.0 ? Color.orange : Color.gray.opacity(0.8))
                                     .cornerRadius(10)
                                 }
@@ -114,14 +118,16 @@ struct Question5View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .foregroundColor(.orange)
-                
-                Button("Avanti") {
+
+                Button {
                     guard let hasEvent = hasStressEvent else {
                         showAlert = true
                         return
@@ -137,20 +143,15 @@ struct Question5View: View {
                             showAlert = true
                             return
                         }
-
                         question5Choice = selected
-
-                        if selected == 7 {
-                            openResponseText5 = otherText
-                        } else {
-                            openResponseText5 = ""
-                        }
-
+                        openResponseText5 = selected == 7 ? otherText : ""
                         onAvanti()
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

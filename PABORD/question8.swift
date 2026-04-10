@@ -4,6 +4,7 @@
 //
 //  Created by Neuroinformatica on 05/05/25.
 //
+
 import SwiftUI
 
 struct Question8View: View {
@@ -62,22 +63,26 @@ struct Question8View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     if question8Choice == -1 {
                         showAlert = true
                         return
                     }
                     onAvanti()
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

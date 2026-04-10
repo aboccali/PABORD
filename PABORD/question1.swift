@@ -58,7 +58,7 @@ struct Question1View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     if currentSlider > 1 {
                         salvaValore()
                         currentSlider -= 1
@@ -66,15 +66,15 @@ struct Question1View: View {
                     } else {
                         onIndietro()
                     }
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .padding()
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
+                Button {
                     if !hasMovedSlider {
-                        // Mostra l'alert se lo slider non è stato spostato
                         showAlert = true
                     } else {
                         salvaValore()
@@ -85,10 +85,11 @@ struct Question1View: View {
                             onAvanti()
                         }
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .padding()
                 .background(hasMovedSlider ? Color.orange : Color.gray.opacity(0.3))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -163,4 +164,3 @@ struct Question1View: View {
         }
     }
 }
-

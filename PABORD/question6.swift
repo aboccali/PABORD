@@ -63,22 +63,26 @@ struct Question6View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
-                
-                Button("Avanti") {
+
+                Button {
                     if question6Choice == -1 {
                         showAlert = true
                         return
                     }
                     onAvanti()
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)

@@ -38,31 +38,32 @@ struct Question4View: View {
 
             Slider(value: $sliderTempValue, in: 0...100, step: 1, onEditingChanged: { _ in
                 hasMovedSlider = true
-                showAlert = false // Reset the alert when the user starts editing the slider
+                showAlert = false
             })
             .padding(.horizontal)
             .accentColor(.orange)
-            
+
             Text("Valore selezionato: \(Int(sliderTempValue))")
                 .padding()
 
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     if currentSlider > 1 {
                         currentSlider -= 1
                         caricaValoreCorrente()
                     } else {
                         onIndietro()
                     }
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .padding()
                 .foregroundColor(.orange)
-                
-                Button("Avanti") {
+
+                Button {
                     if hasMovedSlider {
                         salvaValore()
                         if currentSlider < 5 {
@@ -75,10 +76,11 @@ struct Question4View: View {
                     } else {
                         showAlert = true
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .padding()
                 .background(hasMovedSlider ? Color.orange : Color.gray.opacity(0.3))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -131,4 +133,3 @@ struct Question4View: View {
         }
     }
 }
-

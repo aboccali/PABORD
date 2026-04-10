@@ -5,13 +5,12 @@
 //  Created by Neuroinformatica on 06/05/25.
 //
 
-
 import SwiftUI
 
 struct Question10View: View {
-    @Binding var question10YesNoAnswer: Int             // 0 per No, 1 per Sì
-    @Binding var question10FirstChoices: [Int]          // Scelte multiple
-    @Binding var question10SecondChoice: Int?          // Scelta singola
+    @Binding var question10YesNoAnswer: Int
+    @Binding var question10FirstChoices: [Int]
+    @Binding var question10SecondChoice: Int?
 
     var onAvanti: () -> Void
     var onIndietro: () -> Void
@@ -28,7 +27,6 @@ struct Question10View: View {
         (3, "Allenamento in autonomia (es: camminata, corsa o jogging)"),
         (4, "Allenamento assistito o allenamento con trainer (es: palestra, yoga, pilates, corsi fitness)"),
         (5, "Attività sportiva di squadra (es: pallavolo, calcio, basket, nuoto, ciclismo, ecc)"),
-        
     ]
 
     let secondOptions: [(Int, String)] = [
@@ -48,26 +46,30 @@ struct Question10View: View {
                 .padding(.horizontal)
 
             HStack {
-                Button("No") {
+                Button {
                     hasEvent = false
                     question10YesNoAnswer = 0
                     question10FirstChoices = []
                     question10SecondChoice = nil
                     showAlert = false
+                } label: {
+                    Text("No")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasEvent == false ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
 
-                Button("Sì") {
+                Button {
                     hasEvent = true
                     question10YesNoAnswer = 1
                     showAlert = false
+                } label: {
+                    Text("Sì")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .background(hasEvent == true ? Color.orange : Color.gray.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -101,6 +103,7 @@ struct Question10View: View {
                                     }
                                 }
                                 .padding()
+                                .frame(maxWidth: .infinity)
                                 .background(firstSelected.contains(option.0) ? Color.orange : Color.gray.opacity(0.8))
                                 .cornerRadius(8)
                             }
@@ -134,6 +137,7 @@ struct Question10View: View {
                                     }
                                 }
                                 .padding()
+                                .frame(maxWidth: .infinity)
                                 .background(secondSelected == option.0 ? Color.orange : Color.gray.opacity(0.8))
                                 .cornerRadius(8)
                             }
@@ -147,25 +151,25 @@ struct Question10View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     if firstStepDone {
                         firstStepDone = false
                     } else {
                         onIndietro()
                     }
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .foregroundColor(.orange)
 
-                Button("Avanti") {
-                    // Controllo iniziale: non ha scelto sì/no
+                Button {
                     guard let hasSelected = hasEvent else {
                         showAlert = true
                         return
                     }
 
-                    // Se ha detto Sì ma non ha ancora concluso il primo step
                     if hasSelected && !firstStepDone {
                         if firstSelected.isEmpty {
                             showAlert = true
@@ -176,7 +180,6 @@ struct Question10View: View {
                         return
                     }
 
-                    // Se ha detto Sì ed è al secondo step
                     if hasSelected && firstStepDone {
                         guard let selected = secondSelected else {
                             showAlert = true
@@ -187,16 +190,17 @@ struct Question10View: View {
                         return
                     }
 
-                    // Se ha detto No
                     if !hasSelected {
                         question10YesNoAnswer = 0
                         question10FirstChoices = []
                         question10SecondChoice = nil
                         onAvanti()
                     }
+                } label: {
+                    Text("Avanti")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -212,4 +216,3 @@ struct Question10View: View {
         .padding()
     }
 }
-

@@ -12,14 +12,12 @@ struct Question13View: View {
     var onAvanti: () -> Void
     var onIndietro: () -> Void
 
-    // Elenco delle opzioni (puoi aggiungerne facilmente altre)
     let options = [
         (1, "Meno di 15 minuti"),
         (2, "15-30 minuti"),
         (3, "30-60 minuti"),
         (4, "Più di 60 minuti"),
-        
-        ]
+    ]
 
     var body: some View {
         VStack {
@@ -59,19 +57,23 @@ struct Question13View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
 
                 if question13Choice != 0 {
-                    Button("Avanti") {
+                    Button {
                         onAvanti()
+                    } label: {
+                        Text("Avanti")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)

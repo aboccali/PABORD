@@ -12,14 +12,12 @@ struct Question12View: View {
     var onAvanti: () -> Void
     var onIndietro: () -> Void
 
-    // Elenco delle opzioni (puoi aggiungerne facilmente altre)
     let options = [
         (1, "Molto soddisfacente"),
         (2, "Abbastanza soddisfacente"),
         (3, "Soddisfacente"),
         (4, "Insoddisfacente"),
-        
-        ]
+    ]
 
     var body: some View {
         VStack {
@@ -59,19 +57,23 @@ struct Question12View: View {
             Spacer()
 
             HStack {
-                Button("Indietro") {
+                Button {
                     onIndietro()
+                } label: {
+                    Text("Indietro")
+                        .frame(maxWidth: .infinity)
+                        .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
 
                 if question12Choice != 0 {
-                    Button("Avanti") {
+                    Button {
                         onAvanti()
+                    } label: {
+                        Text("Avanti")
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)

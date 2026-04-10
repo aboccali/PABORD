@@ -4,8 +4,6 @@
 // Created by Neuroinformatica on 27/05/25.
 //
 
-
-
 import SwiftUI
 
 struct LoginView: View {
@@ -54,21 +52,21 @@ struct LoginView: View {
                     Button {
                         authenticateUser()
                     } label: {
-                        if isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Text("Accedi")
+                        Group {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Accedi")
+                            }
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding()
                     }
-                    
-                    .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .padding(.horizontal)
-                    .contentShape(Rectangle())
                     .disabled(isLoading)
                 }
 
@@ -88,44 +86,44 @@ struct LoginView: View {
         if userCode.lowercased() == "demo" && accessCode.lowercased() == "demo" {
             // ✅ MODALITÀ DEMO
             print("🎮 Login DEMO")
-            
+
             // ✅ ORDINE CRITICO: salva PRIMA currentUserCode, POI isTestMode, POI isLoggedIn
             appStateManager.currentUserCode = "Demo"
             appStateManager.isTestMode = true
             appStateManager.isLoggedIn = true
-            
+
             print("✅ DEMO salvato:")
             print("   - currentUserCode: \(String(describing: appStateManager.currentUserCode))")
             print("   - isTestMode: \(appStateManager.isTestMode)")
             print("   - isLoggedIn: \(appStateManager.isLoggedIn)")
-            
+
             // Schedula notifica demo dopo 5 minuti
             NotificationManager.shared.scheduleDemoNotification()
-            
+
             isLoading = false
-            
+
         } else {
             // ✅ MODALITÀ NORMALE
             print("🔐 Login NORMALE per utente: \(userCode)")
-            
+
             NetworkManager.shared.authenticateAndFetchNotificationTimes(userCode: userCode, accessCode: accessCode) { success, notifications, errorMessage in
                 DispatchQueue.main.async {
                     self.isLoading = false
-                    
+
                     if success, let _ = notifications {
                         // ✅ ORDINE CRITICO: salva PRIMA currentUserCode, POI isTestMode, POI isLoggedIn
                         self.appStateManager.currentUserCode = self.userCode
                         self.appStateManager.isTestMode = false
                         self.appStateManager.isLoggedIn = true
-                        
+
                         print("✅ Login riuscito:")
                         print("   - currentUserCode: \(String(describing: self.appStateManager.currentUserCode))")
                         print("   - isTestMode: \(self.appStateManager.isTestMode)")
                         print("   - isLoggedIn: \(self.appStateManager.isLoggedIn)")
-                        
+
                         // Aggiorna device token per notifiche push
                         NetworkManager.shared.updateDeviceTokenOnLogin(userCode: self.userCode)
-                        
+
                     } else {
                         self.loginErrorMessage = errorMessage ?? "Codice utente o codice d'accesso errati."
                         self.showingLoginErrorAlert = true
