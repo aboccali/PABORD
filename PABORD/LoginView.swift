@@ -61,13 +61,14 @@ struct LoginView: View {
                             Text("Accedi")
                         }
                     }
-                    .contentShape(Rectangle())
+                    
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .padding(.horizontal)
+                    .contentShape(Rectangle())
                     .disabled(isLoading)
                 }
 
