@@ -58,6 +58,7 @@ struct Question4View: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
                 .padding()
                 .foregroundColor(.orange)
                 
@@ -76,6 +77,7 @@ struct Question4View: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
                 .padding()
                 .background(hasMovedSlider ? Color.orange : Color.gray.opacity(0.3))
                 .foregroundColor(.white)

@@ -51,6 +51,7 @@ struct Question3View: View {
                 Button("Indietro") {
                     onIndietro()
                 }
+                .contentShape(Rectangle())
                 .padding()
                 .frame(maxWidth: .infinity)
                 .foregroundColor(.orange)
@@ -60,6 +61,7 @@ struct Question3View: View {
                     Button("Avanti") {
                         onAvanti()
                     }
+                    .contentShape(Rectangle())
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.orange)
