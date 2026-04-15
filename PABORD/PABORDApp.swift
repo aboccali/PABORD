@@ -28,11 +28,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Imposta il delegato delle notifiche
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
         
-        // Richiedi permessi per notifiche push
-        NotificationManager.shared.requestNotificationPermission()
-        
-        // Registra l'app per ricevere notifiche push remote
-        application.registerForRemoteNotifications()
+        // ⚠️ NON richiedere il permesso notifiche qui:
+        // viene richiesto dalla NotificationPermissionView dopo il login.
+        // La registrazione per le notifiche remote viene effettuata
+        // solo dopo che l'utente ha dato il consenso (in requestNotificationPermission).
         
         // 🧹 Pulizia sessioni scadute vecchie (oltre 7 giorni)
         AppStateManager.shared.cleanupOldExpiredSessions()
@@ -79,7 +78,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     // MARK: - Gestione Notifiche Push Ricevute
     
-    /// Gestisce le notifiche push ricevute quando l'app Ã¨ in background/chiusa
     /// Gestisce le notifiche push ricevute quando l'app è in background/chiusa
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         
@@ -112,16 +110,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 print("📅 Ora corrente: \(debugFormatter.string(from: Date())) (ora italiana)")
                 
                 // 🔑 notificationSentDate = base per calcolare la finestra temporale
-                //    - ORIGINAL: min(scheduledDate, now) → finestra di 20 min da scheduledDate
-                //    - REMINDER: now → finestra di 5 min da quando arriva il reminder
-                // 🔑 notificationScheduledDateOriginal = data dell'ORIGINAL, sempre, per inviare al server
                 let now = Date()
                 if notificationRole == "reminder" {
-                    AppStateManager.shared.notificationSentDate = now  // finestra parte da adesso
+                    AppStateManager.shared.notificationSentDate = now
                 } else {
-                    AppStateManager.shared.notificationSentDate = min(scheduledDate, now)  // finestra parte dalla data programmata
+                    AppStateManager.shared.notificationSentDate = min(scheduledDate, now)
                 }
-                AppStateManager.shared.notificationScheduledDateOriginal = scheduledDate  // 🔑 Sempre data ORIGINAL per il server
+                AppStateManager.shared.notificationScheduledDateOriginal = scheduledDate
                 
                 // ✅ Salva time_point e info sul giorno
                 if let timePoint = userInfo["timePoint"] as? String {
@@ -165,7 +160,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                     
                     // Salva session ID e ruolo corrente
                     AppStateManager.shared.currentNotificationSessionId = sessionId
-                    AppStateManager.shared.activeNotificationRole = notificationRole  // 🔑 Salva ruolo
+                    AppStateManager.shared.activeNotificationRole = notificationRole
                     
                     NotificationManager.shared.checkIfQuestionnaireIsActive(type: typeInt) { isActive in
                         DispatchQueue.main.async {
@@ -209,6 +204,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 print("Sincronizzazione al ritorno in primo piano fallita: \(message)")
             }
         }
+        
+        // ✅ Riavvia il polling quando l'app torna in foreground
+        // (solo se l'utente è loggato e ha dato il consenso alle notifiche)
+        let state = AppStateManager.shared
+        if state.isLoggedIn && state.hasSeenNotificationPrompt && !state.hasNotificationsDenied {
+            state.startSessionPolling()
+        }
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
@@ -218,7 +220,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         AppStateManager.shared.saveAppState()
         
-        // âœ… RESET dello stato del questionario quando l'app va in background
+        // ✅ Ferma il polling quando l'app va in background
+        AppStateManager.shared.stopSessionPolling()
+        
+        // ✅ RESET dello stato del questionario quando l'app va in background
         if AppStateManager.shared.hasCompletedQuestionnaire {
             print("App in background: resetto stato questionario completato")
             

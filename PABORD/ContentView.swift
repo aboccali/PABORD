@@ -12,19 +12,31 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if appStateManager.isLoggedIn {
-                QuestionnaireView()
-                    .environmentObject(appStateManager)
-            } else {
+            if !appStateManager.isLoggedIn {
                 LoginView()
                     .environmentObject(appStateManager)
+            } else if !appStateManager.hasSeenNotificationPrompt {
+                NotificationPermissionView()
+                    .environmentObject(appStateManager)
+            } else if appStateManager.hasNotificationsDenied {
+                // L'utente ha negato il consenso alle notifiche: non può partecipare
+                NotificationDeniedView()
+                    .environmentObject(appStateManager)
+            } else {
+                QuestionnaireView()
+                    .environmentObject(appStateManager)
+                    .onAppear {
+                        // Avvia il polling quando l'utente entra nella schermata principale
+                        appStateManager.startSessionPolling()
+                    }
             }
         }
         .onAppear {
             print("🎬 ContentView appeared")
             print("   - isLoggedIn: \(appStateManager.isLoggedIn)")
+            print("   - hasSeenNotificationPrompt: \(appStateManager.hasSeenNotificationPrompt)")
+            print("   - hasNotificationsDenied: \(appStateManager.hasNotificationsDenied)")
             print("   - currentUserCode: \(String(describing: appStateManager.currentUserCode))")
         }
     }
 }
-

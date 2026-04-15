@@ -8,7 +8,7 @@ import UserNotifications
 import Foundation
 import UIKit
 
-/// Gestisce le notifiche PUSH (modalità  normale) e LOCALI (modalità  demo)
+/// Gestisce le notifiche PUSH (modalità normale) e LOCALI (modalità demo)
 class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
 
@@ -27,13 +27,35 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Permessi
     
-    /// Richiede il permesso all'utente per le notifiche
+    /// Richiede il permesso all'utente per le notifiche (modalità normale).
+    /// NON chiamare questa all'avvio: viene chiamata dalla NotificationPermissionView.
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if granted {
-                print("Permesso notifiche concesso.")
+                print("✅ Permesso notifiche concesso.")
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
             } else if let error = error {
-                print("Permesso notifiche negato: \(error.localizedDescription)")
+                print("❌ Permesso notifiche negato: \(error.localizedDescription)")
+            } else {
+                print("⚠️ Permesso notifiche negato dall'utente.")
+            }
+        }
+    }
+    
+    /// Richiede il permesso per le notifiche e, SOLO dopo aver ottenuto il consenso,
+    /// schedula la notifica DEMO (5 secondi dopo il consenso). Usato in modalità Demo.
+    func requestPermissionThenScheduleDemo() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                print("✅ Permesso notifiche concesso (DEMO).")
+                // Schedula la demo 5 secondi dopo che l'utente ha dato il consenso
+                self.scheduleDemoNotification()
+            } else if let error = error {
+                print("❌ Permesso notifiche negato (DEMO): \(error.localizedDescription)")
+            } else {
+                print("⚠️ Permesso notifiche negato dall'utente (DEMO).")
             }
         }
     }
@@ -59,9 +81,10 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    // MARK: - Modalità  DEMO
+    // MARK: - Modalità DEMO
     
-    /// Schedula una notifica DEMO dopo 5 minuti con questionario casuale
+    /// Schedula una notifica DEMO dopo 5 secondi con questionario casuale.
+    /// Chiamata SOLO dopo che l'utente ha concesso i permessi (da requestPermissionThenScheduleDemo).
     func scheduleDemoNotification() {
         // Cancella eventuali notifiche precedenti
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
@@ -69,7 +92,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         // Scegli un tipo di questionario casuale (1-8)
         let randomType = Int.random(in: 1...8)
         
-        // Schedula tra 5 minuti
+        // Schedula tra 5 secondi
         let triggerDate = Date().addingTimeInterval(5)
         
         let content = UNMutableNotificationContent()
@@ -167,7 +190,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    /// Mostra notifica anche quando app Ã¨ in foreground
+    /// Mostra notifica anche quando app è in foreground
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                   willPresent notification: UNNotification,
                                   withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
@@ -323,7 +346,6 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         AppStateManager.shared.activeNotificationRole = notificationRole  // 🔑 Salva ruolo notifica
 
         // ✅ Salva timePoint e info giorno dal payload della notifica toccata
-        // Fondamentale per determinare le domande corrette (es. Q4 solo T6, Q16 solo primo/ultimo giorno)
         if let timePoint = userInfo["timePoint"] as? String {
             AppStateManager.shared.currentTimePoint = timePoint
             print("📌 TimePoint (tap): \(timePoint)")

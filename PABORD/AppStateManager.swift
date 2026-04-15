@@ -35,6 +35,26 @@ class AppStateManager: ObservableObject {
             }
         }
     }
+    
+    /// Indica se l'utente ha già visto (e interagito con) la schermata di richiesta notifiche.
+    /// Viene resettato al logout in modo che venga mostrata di nuovo al prossimo login.
+    @Published var hasSeenNotificationPrompt: Bool {
+        didSet {
+            print("🔔 hasSeenNotificationPrompt cambiato a: \(hasSeenNotificationPrompt)")
+            UserDefaults.standard.set(hasSeenNotificationPrompt, forKey: AppConstants.hasSeenNotificationPromptKey)
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
+    /// Indica se l'utente ha esplicitamente negato il permesso alle notifiche dalla schermata PABORD.
+    /// Quando true, viene mostrata la schermata "Non puoi partecipare".
+    @Published var hasNotificationsDenied: Bool {
+        didSet {
+            print("🚫 hasNotificationsDenied cambiato a: \(hasNotificationsDenied)")
+            UserDefaults.standard.set(hasNotificationsDenied, forKey: AppConstants.hasNotificationsDeniedKey)
+            UserDefaults.standard.synchronize()
+        }
+    }
 
     /// Il tipo di notifica che ha attivato il questionario.
     @Published var activeNotificationType: Int? = nil {
@@ -81,7 +101,7 @@ class AppStateManager: ObservableObject {
     /// Il ruolo della notifica che ha attivato il questionario ("original" o "reminder")
     @Published var activeNotificationRole: String? = nil
 
-    // ✅ NUOVI CAMPI per gestire le regole delle domande
+    // ✅ CAMPI per gestire le regole delle domande
     
     /// Il time_point della notifica corrente (es. "T0", "T1", "T6")
     @Published var currentTimePoint: String? = nil
@@ -100,16 +120,25 @@ class AppStateManager: ObservableObject {
     /// Set di ID sessioni già scadute - impedisce riapertura dopo expired
     @Published var expiredSessionIds: Set<String> = []
 
+    // MARK: - Timer per polling sessione attiva (accesso da app senza tap notifica)
+    
+    /// Timer che controlla periodicamente se c'è una sessione attiva non ancora raccolta
+    private var sessionPollingTimer: Timer? = nil
+    
     private init() {
         // ✅ CARICAMENTO SINCRONO da UserDefaults
         let loadedIsTestMode = UserDefaults.standard.bool(forKey: AppConstants.isTestModeKey)
         let loadedIsLoggedIn = UserDefaults.standard.bool(forKey: AppConstants.isLoggedInKey)
         let loadedUserCode = UserDefaults.standard.string(forKey: AppConstants.currentUserCodeKey)
+        let loadedHasSeenPrompt = UserDefaults.standard.bool(forKey: AppConstants.hasSeenNotificationPromptKey)
+        let loadedHasNotificationsDenied = UserDefaults.standard.bool(forKey: AppConstants.hasNotificationsDeniedKey)
         
         // ✅ Assegna i valori SENZA triggerare didSet (usa _variabile)
         self.isTestMode = loadedIsTestMode
         self.isLoggedIn = loadedIsLoggedIn
         self.currentUserCode = loadedUserCode
+        self.hasSeenNotificationPrompt = loadedHasSeenPrompt
+        self.hasNotificationsDenied = loadedHasNotificationsDenied
         
         self.currentQuestionIndex = UserDefaults.standard.integer(forKey: "currentQuestionIndex")
         self.hasCompletedQuestionnaire = UserDefaults.standard.bool(forKey: "hasCompletedQuestionnaire")
@@ -132,14 +161,130 @@ class AppStateManager: ObservableObject {
         }
         
         print("📱 AppStateManager INIZIALIZZATO")
-        
         print("🔐 isLoggedIn: \(self.isLoggedIn)")
         print("🎮 isTestMode: \(self.isTestMode)")
         print("👤 currentUserCode: \(String(describing: self.currentUserCode))")
-        
+        print("🔔 hasSeenNotificationPrompt: \(self.hasSeenNotificationPrompt)")
+        print("🚫 hasNotificationsDenied: \(self.hasNotificationsDenied)")
 
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
+
+    // MARK: - Polling sessione attiva
+    
+    /// Avvia il timer di polling: ogni 15 secondi controlla se c'è una notifica pendente
+    /// consegnata ma non ancora tappata, e attiva il questionario se la sessione è valida.
+    func startSessionPolling() {
+        guard sessionPollingTimer == nil else { return }
+        print("⏱️ Avvio polling sessione attiva (ogni 15 sec)")
+        sessionPollingTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+            self?.checkForActiveSessionFromDeliveredNotifications()
+        }
+        // Prima chiamata immediata
+        checkForActiveSessionFromDeliveredNotifications()
+    }
+    
+    /// Ferma il timer di polling (quando l'app va in background o viene completato il questionario)
+    func stopSessionPolling() {
+        sessionPollingTimer?.invalidate()
+        sessionPollingTimer = nil
+        print("⏹️ Polling sessione fermato")
+    }
+    
+    /// Controlla le notifiche già consegnate al Centro Notifiche e, se trova una sessione
+    /// valida non ancora raccolta (e non scaduta), attiva il questionario.
+    func checkForActiveSessionFromDeliveredNotifications() {
+        // Non fare nulla se c'è già un questionario attivo o completato
+        guard activeNotificationType == nil,
+              !hasCompletedQuestionnaire,
+              isLoggedIn,
+              !hasNotificationsDenied
+        else { return }
+        
+        UNUserNotificationCenter.current().getDeliveredNotifications { [weak self] notifications in
+            guard let self = self else { return }
+            
+            // Considera tutte le notifiche consegnate: sia locali (demo) che push
+            for notification in notifications {
+                let userInfo = notification.request.content.userInfo
+                
+                // Estrai tipo notifica
+                var notificationType: Int?
+                if let t = userInfo["notificationType"] as? Int {
+                    notificationType = t
+                } else if let tStr = userInfo["notificationType"] as? String, let t = Int(tStr) {
+                    notificationType = t
+                }
+                guard let typeInt = notificationType else { continue }
+                
+                // Estrai ruolo
+                guard let role = userInfo["notificationRole"] as? String,
+                      role == "original" || role == "reminder"
+                else { continue }
+                
+                // Estrai data programmata
+                var scheduledDate: Date?
+                if let ti = userInfo["scheduledDate"] as? TimeInterval {
+                    scheduledDate = Date(timeIntervalSince1970: ti)
+                } else if let s = userInfo["scheduledDate"] as? String {
+                    scheduledDate = ISO8601DateFormatter().date(from: s)
+                }
+                guard let scheduled = scheduledDate else { continue }
+                
+                // Genera session ID
+                let sessionId = "\(typeInt)_\(Int(scheduled.timeIntervalSince1970))"
+                
+                // Salta sessioni già scadute o già completate
+                if self.isSessionExpired(sessionId: sessionId) { continue }
+                
+                // Calcola finestra di validità
+                let windowMinutes = role == "reminder" ? 5 : 20
+                let now = Date()
+                let windowStart = role == "reminder" ? now : min(scheduled, now)
+                guard let windowEnd = Calendar.current.date(byAdding: .minute, value: windowMinutes, to: scheduled) else { continue }
+                
+                // Verifica che siamo nella finestra valida
+                guard now >= scheduled, now < windowEnd else { continue }
+                
+                // ✅ Sessione valida trovata — attivala sul main thread
+                print("🔍 Polling: trovata sessione attiva \(sessionId) (tipo \(typeInt), ruolo \(role))")
+                
+                DispatchQueue.main.async {
+                    // Evita doppia attivazione
+                    guard self.activeNotificationType == nil, !self.hasCompletedQuestionnaire else { return }
+                    
+                    self.notificationSentDate = windowStart
+                    self.notificationScheduledDateOriginal = scheduled
+                    self.currentNotificationSessionId = sessionId
+                    self.activeNotificationRole = role
+                    
+                    if let timePoint = userInfo["timePoint"] as? String {
+                        self.currentTimePoint = timePoint
+                    }
+                    if let firstDayStr = userInfo["isFirstDay"] as? String {
+                        self.isFirstDay = firstDayStr == "true"
+                    }
+                    if let lastDayStr = userInfo["isLastDay"] as? String {
+                        self.isLastDay = lastDayStr == "true"
+                    }
+                    
+                    self.activeNotificationType = typeInt
+                    self.currentQuestionIndex = 0
+                    self.hasCompletedQuestionnaire = false
+                    self.isQuestionnaireAvailable = true
+                    self.questionnaireOpenedDate = Date()
+                    
+                    NotificationManager.shared.clearBadge()
+                    print("✅ Polling: questionario tipo \(typeInt) attivato automaticamente (senza tap)")
+                }
+                
+                // Basta la prima sessione valida trovata
+                break
+            }
+        }
+    }
+    
+    // MARK: - Reset
 
     /// Resetta solo lo stato del questionario corrente (non logout)
     func resetQuestionnaireState() {
@@ -154,7 +299,7 @@ class AppStateManager: ObservableObject {
         currentTimePoint = nil
         isFirstDay = false
         isLastDay = false
-        currentNotificationSessionId = nil  // ✅ Resetta sessione corrente
+        currentNotificationSessionId = nil
         // ⚠️ NON resettiamo expiredSessionIds - quelli devono persistere!
         print("🔄 Stato del questionario resettato.")
     }
@@ -192,9 +337,12 @@ class AppStateManager: ObservableObject {
     
     /// ✅ Logout completo - resetta tutto e cancella le credenziali
     func logout() {
+        stopSessionPolling()
         isLoggedIn = false
         isTestMode = false
         currentUserCode = nil
+        hasSeenNotificationPrompt = false   // 🔔 Mostra di nuovo la schermata notifiche al prossimo login
+        hasNotificationsDenied = false      // 🔔 Resetta anche il rifiuto
         resetQuestionnaireState()
         
         // 🧹 Pulizia completa delle sessioni scadute al logout
@@ -211,6 +359,8 @@ class AppStateManager: ObservableObject {
         UserDefaults.standard.set(isTestMode, forKey: AppConstants.isTestModeKey)
         UserDefaults.standard.set(isLoggedIn, forKey: AppConstants.isLoggedInKey)
         UserDefaults.standard.set(currentUserCode, forKey: AppConstants.currentUserCodeKey)
+        UserDefaults.standard.set(hasSeenNotificationPrompt, forKey: AppConstants.hasSeenNotificationPromptKey)
+        UserDefaults.standard.set(hasNotificationsDenied, forKey: AppConstants.hasNotificationsDeniedKey)
 
         UserDefaults.standard.set(currentQuestionIndex, forKey: "currentQuestionIndex")
         UserDefaults.standard.set(hasCompletedQuestionnaire, forKey: "hasCompletedQuestionnaire")
@@ -246,4 +396,6 @@ struct AppConstants {
     static let isTestModeKey = "isTestMode"
     static let isLoggedInKey = "isLoggedIn"
     static let currentUserCodeKey = "currentUserCode"
+    static let hasSeenNotificationPromptKey = "hasSeenNotificationPrompt"
+    static let hasNotificationsDeniedKey = "hasNotificationsDenied"
 }
